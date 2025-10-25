@@ -44,8 +44,16 @@
 
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
-from .views import UserViewSet, SellerViewSet, InjeraViewSet, RatingViewSet, OrderViewSet
+from .views import (
+    UserViewSet,
+    SellerViewSet,
+    InjeraViewSet,
+    RatingViewSet,
+    OrderViewSet,
+)
+from .auth_views import SignupView, LoginView  # import auth views
 
+# Use a DRF router for all viewsets
 router = DefaultRouter()
 router.register(r'users', UserViewSet, basename='user')
 router.register(r'sellers', SellerViewSet, basename='seller')
@@ -53,7 +61,14 @@ router.register(r'injeras', InjeraViewSet, basename='injera')
 router.register(r'ratings', RatingViewSet, basename='rating')
 router.register(r'orders', OrderViewSet, basename='order')
 
+# Combine router URLs with custom authentication endpoints
 urlpatterns = [
+    # Auth routes
+    path('auth/signup/', SignupView.as_view(), name='signup'),
+    path('auth/login/', LoginView.as_view(), name='login'),
+
+    # API routes for viewsets
     path('', include(router.urls)),
 ]
+
 

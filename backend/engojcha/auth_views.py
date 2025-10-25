@@ -2,6 +2,10 @@ from rest_framework import generics, status
 from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import RefreshToken
 from django.contrib.auth import authenticate
+from rest_framework import generics, status, serializers
+from rest_framework.response import Response
+from rest_framework_simplejwt.tokens import RefreshToken
+from django.contrib.auth import authenticate
 
 from .models import User, Seller
 from .serializers import UserSerializer
@@ -42,17 +46,49 @@ class SignupView(generics.GenericAPIView):
 # -----------------------------
 # Login View (JWT)
 # -----------------------------
-class LoginView(generics.GenericAPIView):
-    def post(self, request):
-        email = request.data.get("email")
-        password = request.data.get("password")
+# class LoginView(generics.GenericAPIView):
+#     def post(self, request):
+#         email = request.data.get("email")
+#         password = request.data.get("password")
 
-        if not email or not password:
-            return Response({"error": "Email and password are required."}, status=400)
+#         if not email or not password:
+#             return Response({"error": "Email and password are required."}, status=400)
+
+#         user = authenticate(username=email, password=password)
+#         if not user:
+#             return Response({"error": "Invalid credentials."}, status=401)
+
+#         refresh = RefreshToken.for_user(user)
+#         return Response({
+#             "message": "Login successful.",
+#             "user": {
+#                 "id": user.id,
+#                 "username": user.username,
+#                 "email": user.email,
+#                 "role": user.role,
+#             },
+#             "refresh": str(refresh),
+#             "access": str(refresh.access_token),
+#         })
+
+class LoginSerializer(serializers.Serializer):
+    email = serializers.EmailField()
+    password = serializers.CharField(write_only=True)
+
+
+class LoginView(generics.GenericAPIView):
+    serializer_class = LoginSerializer
+
+    def post(self, request):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        email = serializer.validated_data["email"]
+        password = serializer.validated_data["password"]
 
         user = authenticate(username=email, password=password)
         if not user:
-            return Response({"error": "Invalid credentials."}, status=401)
+            return Response({"error": "Invalid credentials."}, status=status.HTTP_401_UNAUTHORIZED)
 
         refresh = RefreshToken.for_user(user)
         return Response({
@@ -65,4 +101,4 @@ class LoginView(generics.GenericAPIView):
             },
             "refresh": str(refresh),
             "access": str(refresh.access_token),
-        })
+        }, status=status.HTTP_200_OK)
